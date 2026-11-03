@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use this code or data, please cite the paper below."
+title: "MDI: The Minimum Detectable Improvement of an LLM Judge"
+type: software
+authors:
+  - family-names: Kim
+    given-names: Hyeong-seob
+    affiliation: WIGTN
+    email: harrison@wigtn.com
+repository-code: "https://github.com/wigtn/mdi-llm-judge"
+license:
+  - Apache-2.0
+  - CC-BY-4.0
+version: tae2026-camera-ready-v2
+date-released: "2026-11-03"
+keywords:
+  - llm-as-a-judge
+  - llm-evaluation
+  - measurement
+  - reproducibility
+preferred-citation:
+  type: conference-paper
+  title: "MDI: The Minimum Detectable Improvement of an LLM Judge"
+  authors:
+    - family-names: Kim
+      given-names: Hyeong-seob
+      affiliation: WIGTN
+  collection-title: "TAE (Trust-AI-Eval): Can We Trust AI Evaluation? Workshop at NeurIPS 2026"
+  year: 2026
+  url: "https://github.com/wigtn/mdi-llm-judge"
+  notes: "Non-archival"

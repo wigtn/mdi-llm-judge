@@ -363,3 +363,16 @@ def test_shard_paths_ignores_quarantine_sidecars(tmp_path: Path) -> None:
     paths = pipeline.shard_paths(str(tmp_path))
     # Then: only the shard is loaded
     assert [os.path.basename(path) for path in paths] == ["e_x.jsonl"]
+
+
+def test_manuscript_decay_figure_renders_without_the_provenance_footer() -> None:
+    """The paper's Figure 4 carries no grey run-id line; other decay renders keep theirs."""
+    # Given: one derived record's meta
+    meta = {"input_digest": "sha256:21ae018b0319c004", "run_ids": ["r_20260801_8eccda"]}
+    # When: the footer is chosen for the manuscript env and for any other env
+    manuscript = pipeline.decay_provenance("exp3_decay", meta, "e_a7cb4136ad0c")
+    diagnostic = pipeline.decay_provenance("exp3_decay8", meta, "e_e941458fd533")
+    # Then: none for the paper figure, the full stamp for the diagnostic render
+    assert manuscript is None
+    assert diagnostic is not None
+    assert "r_20260801_8eccda" in diagnostic and "e_e941458fd533" in diagnostic

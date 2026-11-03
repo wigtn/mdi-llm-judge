@@ -499,6 +499,13 @@ def _provenance_line(exp: str, meta: Dict[str, Any], env_id: str) -> str:
     return f"exp {exp} · env {env_id} · runs {runs} · input {digest[:23]}"
 
 
+def decay_provenance(exp: str, meta: Dict[str, Any], env_id: str) -> Optional[str]:
+    """Footer for a decay render: none on a manuscript figure, the stamp everywhere else."""
+    if (exp, env_id) in figures_mod.MANUSCRIPT_DECAY_FIGURES:
+        return None
+    return _provenance_line(exp, meta, env_id)
+
+
 def _null_mdi_index(
     payload: Dict[str, Any],
     alpha: float,
@@ -591,7 +598,7 @@ def report_figures(
                         figures_dir,
                         stem=f"decay_curve_{exp}_{fit['env_id']}",
                         formats=formats,
-                        provenance=_provenance_line(exp, meta, fit["env_id"]),
+                        provenance=decay_provenance(exp, meta, fit["env_id"]),
                     )
                 )
         promotions_path = os.path.join(path, ANALYSIS_FILES["promotions"])

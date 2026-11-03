@@ -9,6 +9,7 @@ import pytest
 from mdi.stats.decay import DecayFit, fit_decay
 from mdi.stats.figures import (
     FIGURE_EPOCH,
+    HEADLINE_FIP_ENVS,
     decay_caption,
     noise_floor_display,
     promotion_stopping_title,
@@ -308,6 +309,29 @@ def test_decay_caption_falls_back_to_the_field_name_when_unmapped() -> None:
     fit["group_field"] = "rubric_variant"
     # When/Then: the raw field name carries the caption
     assert "rubric_variant groups per cell" in decay_caption(fit)
+
+
+def test_decay_caption_prints_a_whole_group_count_without_a_decimal() -> None:
+    """The four-paraphrase figure read "4.0 prompt-paraphrase groups" in the paper."""
+    # Given: a whole and a fractional mean group count
+    whole = _decay_fit(
+        omega_sq=0.04, omega_sq_ci_lo=0.01, omega_sq_ci_hi=0.09, mean_groups_per_cell=4.0
+    )
+    fractional = _decay_fit(
+        omega_sq=0.04, omega_sq_ci_lo=0.01, omega_sq_ci_hi=0.09, mean_groups_per_cell=3.96
+    )
+    # When/Then: the whole count prints as an integer, the fractional one keeps a decimal
+    assert "included: 4 prompt-paraphrase groups" in decay_caption(whole)
+    assert "included: 4.0 " not in decay_caption(whole)
+    assert "included: 4.0 prompt-paraphrase groups" in decay_caption(fractional)
+
+
+def test_headline_fip_labels_use_the_tables_short_judge_name() -> None:
+    """Every overlay legend names the dense judge "4o-mini", as Tables 1-5 and Figure 1 do."""
+    # Given/When/Then: no headline label spells the long form
+    labels = [label for _, _, label in HEADLINE_FIP_ENVS]
+    assert labels and all(not label.startswith("gpt-4o-mini") for label in labels)
+    assert all(label.startswith(("4o-mini", "gpt-5.6")) for label in labels)
 
 
 def test_promotion_stopping_title_counts_the_band_without_implying_an_order() -> None:

@@ -62,7 +62,7 @@ holds on other tasks is left to the expanded grid.
     whose MDI clears a target gain [+\%p] (``un.''$=$unreachable; a dash $=$ an
     unsupported budget). \textbf{Both are at level $\alpha$; for a stated power
     multiply by the measured factor of $1.43$ (Section~\ref{sec:framework}),
-    which changes 10 of these 24 answers, 4 to unreachable; a gain just past
+    which changes 10 of these 24 answers, 5 to unreachable; a gain just past
     $\mdi$ can still reverse (Table~\ref{tab:fip-conversion}).} All in \%p; ties
     resolved at full precision. Every column holds the prompt fixed
     (Section~\ref{sec:exp3}). Pilot estimates; raw scale:
@@ -70,6 +70,11 @@ holds on other tasks is left to the expanded grid.
     every entry past $N{=}1$, conservatively by $10$--$40\%$ from $N{=}3$
     to $N{=}10$ ($26$--$47\%$ anchor); factors and the corrected column are
     in Table~\ref{tab:pool-inflation}.}
+%% source: data/derived/exp1_{dense,anchor,anchor_scales,alpaca}/mdi_table.json,
+%% reverse_entries vs reverse_entries_at_power (alpha 0.05, power 0.8): 10 of
+%% 24 answers change; to unreachable: 4o-mini Summ L5 +1 (5), 4o-mini Summ S100
+%% +0.5 (8), gpt-5.6 Summ L5 +2 (3), gpt-5.6 Summ S100 +1 (5), 4o-mini Instr
+%% L10 +0.5 (10). Table 1's MDI x 1.43 gives the same 10 and 5.
   \label{tab:exp1-grid}
   \label{tab:exp1-lookup}
   %% source: paper/tables/variance_by_env.csv (sigma, flip_rate),
@@ -106,7 +111,7 @@ holds on other tasks is left to the expanded grid.
 Figure~\ref{fig:mdi-overview} plots this table. Inside the dense tier the
 threshold spans $0.65$--$1.75$~\%p at $N{=}1$ (the anchor rows reach
 $3.00$~\%p on fewer items and fewer repeats, so they stay out of that ratio),
-and $N{=}1 \to 5$ roughly halves it in every cell, short of the
+and $N{=}1 \to 5$ roughly halves it in every dense cell, short of the
 $\sigma/\sqrt{N}$ ideal because the finite estimation pool adds a term of its
 own (Appendix~\ref{app:extra}).
 
@@ -120,9 +125,9 @@ all $55$ pairs (spreads $35.87$/$37.02$~\%p). Detection tracks the judge's
 gap, not the reference's: across an external $2$~\%p boundary it barely
 moves ($0.859$ vs.\ $0.936$, $N{=}1$); across $\mdi$ it splits
 $0.311$/$0.985$, a design check only. Both directions occur: on
-s\_07--s\_12 ($1.15$~\%p externally, separated by \emph{no} facet)
+$s_{07}$--$s_{12}$ ($1.15$~\%p externally, separated by \emph{no} facet)
 detection climbs $0.255 \to 0.980$, confidence in a difference no
-reference axis supports; on s\_06--s\_07 ($3.38$~\%p, three facets,
+reference axis supports; on $s_{06}$--$s_{07}$ ($3.38$~\%p, three facets,
 $7.17$ on coherence alone) the judge gap is $0.36$~\%p and detection stays
 at $0.035 \to 0.075$, not a threshold-straddler's $0.5$; it is one pair of the
 $45$ (of $55$) the reference separates, none separated by the average alone

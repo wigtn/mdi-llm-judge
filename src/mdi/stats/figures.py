@@ -79,7 +79,7 @@ clipped on every render before 2026-08-05.
 """
 
 HEADLINE_FIP_ENVS: Tuple[Tuple[str, str, str], ...] = (
-    ("exp1_dense", "e_250190cb1b81", "gpt-4o-mini · Summ · L5"),
+    ("exp1_dense", "e_250190cb1b81", "4o-mini · Summ · L5"),
     ("exp1_anchor", "e_b842cbff3261", "gpt-5.6 · Summ · L5"),
     ("exp1_alpaca", "e_dabfcd0d96e0", "4o-mini · Instr · L5"),
 )
@@ -88,6 +88,16 @@ HEADLINE_FIP_ENVS: Tuple[Tuple[str, str, str], ...] = (
 Fixed and ordered so the render is deterministic and the manuscript caption can
 name the series in the same order. Envs absent from the derived tree are
 skipped, so the overlay degrades to whatever is present rather than failing.
+Labels follow the tables' "4o-mini" short form, as in :data:`TEASER_MDI_ENVS`.
+"""
+
+MANUSCRIPT_DECAY_FIGURES: Tuple[Tuple[str, str], ...] = (("exp3_decay", "e_a7cb4136ad0c"),)
+"""(experiment, env_id) of the per-env decay renders the manuscript includes directly.
+
+These render without the visible provenance line, the same rule as the overlays
+and the stopping figure: in the paper the 5.5 pt grey footer read as leftover
+debug output. Run ids stay in the LaTeX comment beside the figure and in the
+derived record's meta. Every other per-env diagnostic render keeps its footer.
 """
 
 TEASER_MDI_ENVS: Tuple[Tuple[str, str, str], ...] = (
@@ -305,10 +315,10 @@ def decay_caption(fit: DecayFit) -> str:
             "not expected by design and becomes measurable only with the procedural axis (Exp 3)."
         )
     axis = GROUP_FIELD_LABELS.get(fit["group_field"], fit["group_field"])
-    return (
-        f"Procedural axis included: {fit['mean_groups_per_cell']:.1f} {axis} "
-        "groups per cell enter the floor estimate."
-    )
+    groups = fit["mean_groups_per_cell"]
+    # A whole count prints as one ("4", not "4.0"); a fractional mean keeps a decimal.
+    count = str(int(groups)) if float(groups).is_integer() else f"{groups:.1f}"
+    return f"Procedural axis included: {count} {axis} groups per cell enter the floor estimate."
 
 
 def promotion_stopping_title(seed: int, clears: Sequence[bool]) -> str:
@@ -777,7 +787,10 @@ def render_fip_overlay(
             ha="right",
         )
         axes.set_xlabel("Observed improvement Δ (%p, scale-normalized)")
-        axes.set_ylabel("Reversal probability  FIP(Δ)")
+        # The 1.6 in canvas leaves the y axis about an inch tall: the longer
+        # "Reversal probability  FIP(Δ)" ran past the top edge and printed as
+        # "FIP(". The title already says "Reversal probability".
+        axes.set_ylabel("FIP(Δ)")
         axes.set_title(title)
         axes.set_xlim(0.0, x_upper * 1.06 if x_upper > 0 else 1.0)
         axes.set_ylim(0.0, min(1.0, max(0.2, y_upper * 1.28)))
@@ -833,15 +846,16 @@ def render_decay_curve(
             label="1/√N reference",
         )
         if floor_detected:
-            axes.axhline(omega_pp, color=SERIES_SECONDARY, linestyle=":", linewidth=1.4, zorder=2)
-            axes.text(
-                xs[-1],
+            # The floor is named in the legend, not beside the line: the measured
+            # curve flattens onto the floor, so a label at the last N sat on top
+            # of the last marker.
+            axes.axhline(
                 omega_pp,
-                f"  {floor_text}",
                 color=SERIES_SECONDARY,
-                fontsize=8.5,
-                va="bottom",
-                ha="right",
+                linestyle=":",
+                linewidth=1.4,
+                zorder=2,
+                label=floor_text,
             )
         else:
             axes.text(
@@ -865,7 +879,11 @@ def render_decay_curve(
         axes.set_title(title)
         upper = max(max(measured), max(reference), omega_pp if floor_detected else 0.0) * 1.15
         axes.set_ylim(0.0, upper if upper > 0 else 1.0)
-        axes.legend(loc="upper right")
+        # Lower left is the one region every decay curve leaves empty: both lines
+        # start high at N=1 and fall to the right, and the floor sits above zero.
+        # Upper right collided with the floor line (detected) or with the
+        # "below detection" note (not detected).
+        axes.legend(loc="lower left")
         _footer(fig, provenance, decay_caption(fit))
         stem_name = stem or f"decay_curve_{fit['env_id']}"
         return _save(fig, out_dir, stem_name, formats, title)
