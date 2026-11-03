@@ -879,8 +879,10 @@ def render_decay_curve(
         axes.set_title(title)
         upper = max(max(measured), max(reference), omega_pp if floor_detected else 0.0) * 1.15
         axes.set_ylim(0.0, upper if upper > 0 else 1.0)
-        # Lower left is the one region every decay curve leaves empty: both lines
-        # start high at N=1 and fall to the right, and the floor sits above zero.
+        # Lower left is empty on every decay render in this tree: both lines
+        # start high at N=1 and fall to the right, and the detected floors sit
+        # well above the legend (0.58 and 0.73 of the y range). A floor low
+        # enough to cross the legend box would need a different placement.
         # Upper right collided with the floor line (detected) or with the
         # "below detection" note (not detected).
         axes.legend(loc="lower left")

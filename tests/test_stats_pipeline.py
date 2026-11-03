@@ -3,12 +3,13 @@
 import json
 import os
 from pathlib import Path
-from typing import List
+from typing import Any, Dict, List, Optional
 
 import pytest
 
 from mdi import store
 from mdi.cli import main
+from mdi.stats import figures as figures_mod
 from mdi.stats import pipeline
 from mdi.stats.synthetic import synthetic_records
 
@@ -365,14 +366,29 @@ def test_shard_paths_ignores_quarantine_sidecars(tmp_path: Path) -> None:
     assert [os.path.basename(path) for path in paths] == ["e_x.jsonl"]
 
 
-def test_manuscript_decay_figure_renders_without_the_provenance_footer() -> None:
+def test_manuscript_decay_figure_renders_without_the_provenance_footer(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """The paper's Figure 4 carries no grey run-id line; other decay renders keep theirs."""
-    # Given: one derived record's meta
+    # Given: a derived tree with the manuscript's decay env and a diagnostic one,
+    # and a renderer stand-in that records the footer report_figures passes it
     meta = {"input_digest": "sha256:21ae018b0319c004", "run_ids": ["r_20260801_8eccda"]}
-    # When: the footer is chosen for the manuscript env and for any other env
-    manuscript = pipeline.decay_provenance("exp3_decay", meta, "e_a7cb4136ad0c")
-    diagnostic = pipeline.decay_provenance("exp3_decay8", meta, "e_e941458fd533")
+    for exp, env_id in (("exp3_decay", "e_a7cb4136ad0c"), ("exp3_decay8", "e_e941458fd533")):
+        exp_dir = tmp_path / "derived" / exp
+        exp_dir.mkdir(parents=True)
+        payload = {"meta": meta, "fits": [{"env_id": env_id}]}
+        (exp_dir / "decay.json").write_text(json.dumps(payload), encoding="utf-8")
+    footers: Dict[str, Optional[str]] = {}
+
+    def record(fit: Dict[str, Any], out_dir: str, **kwargs: Any) -> List[str]:
+        footers[fit["env_id"]] = kwargs["provenance"]
+        return []
+
+    monkeypatch.setattr(figures_mod, "render_decay_curve", record)
+    # When: the figures are regenerated from that tree
+    pipeline.report_figures(str(tmp_path / "derived"), str(tmp_path / "figures"))
     # Then: none for the paper figure, the full stamp for the diagnostic render
-    assert manuscript is None
+    assert footers["e_a7cb4136ad0c"] is None
+    diagnostic = footers["e_e941458fd533"]
     assert diagnostic is not None
     assert "r_20260801_8eccda" in diagnostic and "e_e941458fd533" in diagnostic

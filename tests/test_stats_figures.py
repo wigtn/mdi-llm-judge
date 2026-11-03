@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 
 import pytest
 
+from mdi.stats import figures as figures_mod
 from mdi.stats.decay import DecayFit, fit_decay
 from mdi.stats.figures import (
     FIGURE_EPOCH,
@@ -24,6 +25,7 @@ from mdi.stats.fip import FipCurve, estimate_fip, make_split
 from mdi.stats.mdi_table import mdi_from_curve
 from mdi.stats.null_mdi import NullMdiEntry, null_mdi_entries
 from mdi.stats.raster import raster_diff
+from mdi.stats.scales import to_pp
 from mdi.stats.synthetic import synthetic_records
 
 ENV = "e_synthetic"
@@ -324,6 +326,81 @@ def test_decay_caption_prints_a_whole_group_count_without_a_decimal() -> None:
     assert "included: 4 prompt-paraphrase groups" in decay_caption(whole)
     assert "included: 4.0 " not in decay_caption(whole)
     assert "included: 4.0 prompt-paraphrase groups" in decay_caption(fractional)
+
+
+def _capture_figure(monkeypatch: pytest.MonkeyPatch) -> List[Any]:
+    """Swap the module's ``_save`` for one that keeps the Figure instead of writing it."""
+    captured: List[Any] = []
+
+    def keep(fig: Any, out_dir: str, stem: str, formats: Any, title: str) -> List[str]:
+        fig.canvas.draw()
+        captured.append(fig)
+        return []
+
+    monkeypatch.setattr(figures_mod, "_save", keep)
+    return captured
+
+
+def test_fip_overlay_y_label_fits_inside_the_short_canvas(
+    curve: FipCurve, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The paper printed the overlay's y label clipped to "FIP(" on the 1.6 in canvas."""
+    # Given: the overlay rendered at its manuscript size, figure kept in memory
+    captured = _capture_figure(monkeypatch)
+    render_fip_overlay([(curve, 0.8, "env A")], "unused", stem="f")
+    fig = captured[0]
+    # When: the drawn y label is measured against the canvas
+    label = fig.axes[0].yaxis.label
+    box = label.get_window_extent(fig.canvas.get_renderer())
+    # Then: it lies wholly inside the figure
+    assert label.get_text() == "FIP(Δ)"
+    assert box.y0 >= fig.bbox.y0 and box.y1 <= fig.bbox.y1
+
+
+def test_decay_floor_is_named_in_the_legend_not_beside_its_line(
+    fit: DecayFit, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A label at the last N sat on the measured curve's last marker."""
+    # Given: a fit whose floor is detected, rendered with the figure kept in memory
+    floor_text = noise_floor_display(fit)
+    assert not floor_text.startswith("noise floor: below detection")
+    captured = _capture_figure(monkeypatch)
+    render_decay_curve(fit, "unused", stem="d")
+    axes = captured[0].axes[0]
+    # When/Then: the floor is a legend entry and no free text on the axes repeats it
+    legend = axes.get_legend()
+    assert legend is not None
+    assert floor_text in [text.get_text() for text in legend.get_texts()]
+    assert floor_text.strip() not in [text.get_text().strip() for text in axes.texts]
+
+
+def test_decay_legend_sits_in_the_lower_left_clear_of_curves_and_floor(
+    fit: DecayFit, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Upper right collided with the floor line and the "below detection" note."""
+    # Given: a decay render with a detected floor, figure kept in memory
+    captured = _capture_figure(monkeypatch)
+    render_decay_curve(fit, "unused", stem="d")
+    fig = captured[0]
+    axes = fig.axes[0]
+    legend = axes.get_legend()
+    assert legend is not None
+    # When: the legend box is measured in display and in axes coordinates
+    box = legend.get_window_extent(fig.canvas.get_renderer())
+    (x0, y0), (x1, y1) = axes.transAxes.inverted().transform([[box.x0, box.y0], [box.x1, box.y1]])
+    # Then: it occupies the lower-left quadrant ...
+    assert x0 < 0.1 and y0 < 0.1 and x1 <= 0.5 and y1 <= 0.5
+    # ... no measured or reference point falls inside it ...
+    for line in axes.get_lines():
+        if line.get_label().startswith("noise floor"):
+            continue
+        for px, py in axes.transData.transform(line.get_xydata()):
+            assert not box.contains(px, py), line.get_label()
+    # ... and the floor line passes above it
+    floor_y = axes.transAxes.inverted().transform(
+        axes.transData.transform((1.0, to_pp(fit["omega"], fit["scale"])))
+    )[1]
+    assert floor_y > y1
 
 
 def test_headline_fip_labels_use_the_tables_short_judge_name() -> None:
