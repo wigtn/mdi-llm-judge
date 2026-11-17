@@ -6,9 +6,14 @@ LLM Judge* by Hyeong-seob Kim (WIGTN), presented at the
 (non-archival). Every number in the paper resolves to a file in this
 repository.
 
-- Paper: the PDF is attached to the
-  [latest release](https://github.com/wigtn/mdi-llm-judge/releases/latest);
-  the LaTeX source is in [`paper/tae2026/`](paper/tae2026/).
+- Paper: [NeurIPS 2026 page](https://neurips.cc/virtual/2026/178307).
+  The PDF is also attached to the
+  [latest release](https://github.com/wigtn/mdi-llm-judge/releases/latest),
+  and the LaTeX source is in [`paper/tae2026/`](paper/tae2026/).
+- Poster: [`paper/poster/mdi_poster_61x85cm.pdf`](paper/poster/mdi_poster_61x85cm.pdf)
+  (61 × 85 cm, as printed) and
+  [`paper/poster/mdi_poster.png`](paper/poster/mdi_poster.png)
+  (2067 × 2880 px).
 - Data: every judge call the paper rests on, the derived records behind
   each figure and table, and the cost ledger, all under [`data/`](data/).
 - Citation: [BibTeX below](#citation), or GitHub's "Cite this repository"
@@ -81,6 +86,7 @@ actually observed (Table 5).
 | `data/gates/` | The estimate-cost and pilot records each run had to clear before the full grid. |
 | `paper/figures/`, `paper/tables/` | Generated artifacts, never hand-edited. |
 | `paper/tae2026/` | The manuscript source. |
+| `paper/poster/` | The workshop poster: the print PDF and the PNG uploaded to the NeurIPS virtual site. The poster's build scripts are not part of this repository. |
 
 ## Reproducing the paper
 
